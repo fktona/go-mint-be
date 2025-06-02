@@ -36,7 +36,9 @@ export class UserSocialsController {
       const existingConnection = await this.userSocialsService.findByProvider(userId, req.params.provider);
 
       if (existingConnection && existingConnection.walletAddress !== userId) {
+        console.log({ existingConnection, userId, provider: req.params.provider });
         // If connection exists, redirect with success=false and reason
+        console.log("social_already_connected", existingConnection.walletAddress, userId, req.params.provider);
         return res.redirect(
           `${this.configService.get('FRONTEND_URL')}/profile?success=false&reason=social_already_connected&provider=${req.params.provider}`
         );
