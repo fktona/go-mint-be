@@ -5,6 +5,7 @@ import { ChatMessage } from './entities/chat-message.entity';
 import { CreateChatMessageDto } from './dto/create-chat-message.dto';
 import { FriendsService } from '../friends/friends.service';
 import { UserService } from '../user/user.service';
+import { EncryptionService } from '../common/services/encryption.service';
 
 @Injectable()
 export class ChatService {
@@ -13,6 +14,7 @@ export class ChatService {
     private readonly chatMessageRepository: Repository<ChatMessage>,
     private readonly friendsService: FriendsService,
     private readonly userService: UserService,
+    private readonly encryptionService: EncryptionService,
   ) { }
 
   async createMessage(senderWalletAddress: string, createChatMessageDto: CreateChatMessageDto): Promise<ChatMessage> {
@@ -30,10 +32,19 @@ export class ChatService {
       throw new BadRequestException('Cannot send message to a user who has blocked you');
     }
 
+    // Generate encryption key for this message
+    const encryptionKey = this.encryptionService.generateKey();
+
+    // Encrypt the message content
+    const encryptionParams = this.encryptionService.encrypt(createChatMessageDto.content, encryptionKey);
+
     const message = this.chatMessageRepository.create({
       sender_wallet_address: senderWalletAddress,
       receiver_wallet_address: createChatMessageDto.receiver_wallet_address,
-      content: createChatMessageDto.content,
+      content: createChatMessageDto.content, // Store original content for backward compatibility
+      encryption_key: encryptionKey,
+      is_encrypted: true,
+      encryption_params: encryptionParams,
     });
 
     return this.chatMessageRepository.save(message);

@@ -1,6 +1,7 @@
 import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
 import { User } from '../../user/entities/user.entity';
 import { CommunityChat } from './community-chat.entity';
+import { EncryptionParams } from '../../common/services/encryption.service';
 
 @Entity('community_chat_messages')
 export class CommunityChatMessage {
@@ -15,6 +16,15 @@ export class CommunityChatMessage {
 
     @Column('text')
     content: string;
+
+    @Column({ nullable: true })
+    encryption_key: string;
+
+    @Column({ default: false })
+    is_encrypted: boolean;
+
+    @Column('jsonb', { nullable: true })
+    encryption_params: EncryptionParams;
 
     @CreateDateColumn()
     created_at: Date;

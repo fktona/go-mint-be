@@ -172,6 +172,18 @@ export class UserSocialsService {
     });
 
     if (!connection) {
+      throw new NotFoundException(`No ${provider} connection found for this user`);
+    }
+
+    return connection;
+  }
+
+  async findByUsername(username: string) {
+    const connection = await this.userSocialRepository.findOne({
+      where: { username }
+    });
+
+    if (!connection) {
       return null;
     }
 

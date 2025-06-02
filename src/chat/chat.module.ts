@@ -5,6 +5,7 @@ import { ChatGateway } from './chat.gateway';
 import { ChatMessage } from './entities/chat-message.entity';
 import { FriendsModule } from '../friends/friends.module';
 import { UserModule } from '../user/user.module';
+import { EncryptionService } from '../common/services/encryption.service';
 
 @Module({
   imports: [
@@ -12,7 +13,7 @@ import { UserModule } from '../user/user.module';
     FriendsModule,
     UserModule,
   ],
-  providers: [ChatService, ChatGateway],
+  providers: [ChatService, ChatGateway, EncryptionService],
   exports: [ChatService],
 })
 export class ChatModule { }

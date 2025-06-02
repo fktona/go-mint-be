@@ -5,6 +5,7 @@ import { CommunityChat } from './entities/community-chat.entity';
 import { CommunityChatMessage } from './entities/community-chat-message.entity';
 import { UserService } from '../user/user.service';
 import { UserToken } from '../user-tokens/entities/user-token.entity';
+import { EncryptionService } from '../common/services/encryption.service';
 
 @Injectable()
 export class CommunityChatService {
@@ -16,6 +17,7 @@ export class CommunityChatService {
     @InjectRepository(UserToken)
     private readonly userTokenRepository: Repository<UserToken>,
     private readonly userService: UserService,
+    private readonly encryptionService: EncryptionService,
   ) { }
 
   async createForToken(tokenId: string, creatorWalletAddress: string): Promise<CommunityChat> {
@@ -86,10 +88,19 @@ export class CommunityChatService {
     const chat = await this.findOne(chatId);
     await this.userService.findByWalletAddress(senderWalletAddress);
 
+    // Generate encryption key for this message
+    const encryptionKey = this.encryptionService.generateKey();
+
+    // Encrypt the message content
+    const encryptionParams = this.encryptionService.encrypt(content, encryptionKey);
+
     const message = this.communityChatMessageRepository.create({
       community_chat_id: chatId,
       sender_wallet_address: senderWalletAddress,
-      content,
+      content: content, // Store original content for backward compatibility
+      encryption_key: encryptionKey,
+      is_encrypted: true,
+      encryption_params: encryptionParams,
     });
 
     return this.communityChatMessageRepository.save(message);
