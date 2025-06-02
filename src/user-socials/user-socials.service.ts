@@ -124,7 +124,10 @@ export class UserSocialsService {
           coverUrl: socialData._json.profile_banner_url || null,
           websiteUrl: socialData._json.url || null,
           isVerified: socialData._json.verified || null,
+          profileUrl: socialData.provider === 'twitter' ?
+            `https://twitter.com/${socialData.username}` : null
         });
+
       }
 
       // Create new connection
