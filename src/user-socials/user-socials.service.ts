@@ -165,7 +165,7 @@ export class UserSocialsService {
 
   async findByProvider(walletAddress: string, provider: SocialProvider) {
     const connection = await this.userSocialRepository.findOne({
-      where: { walletAddress }
+      where: { walletAddress, provider }
     });
 
     if (!connection) {

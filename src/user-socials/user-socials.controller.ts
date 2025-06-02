@@ -30,34 +30,31 @@ export class UserSocialsController {
     try {
       // Extract profile from authenticated request
       const profile = req?.full_profile;
+      const userId = req.profile.customData?.stateId;
 
-      console.log("Profile data:", profile);
+      // Check if social connection already exists
+      const existingConnection = await this.userSocialsService.findByProvider(userId, req.params.provider);
 
-      // Get the user ID from state (set during initial auth request)
-      const userId = req.profile.customData?.stateId
+      if (existingConnection) {
+        // If connection exists, redirect with success=false and reason
+        return res.redirect(
+          `${this.configService.get('FRONTEND_URL')}/profile?success=false&reason=social_already_connected&provider=${req.params.provider}`
+        );
+      }
 
-      // console.log("User ID from state:", userId);
-      // console.log("Profile data:", profile);
-      // console.log("Profile", req?.profile);
-
-      // if (!profile || !userId) {
-      //   throw new Error('Missing profile or user ID');
-      // }
-
+      // If no existing connection, create new one
       await this.userSocialsService.create(userId, profile);
+
       // Redirect to frontend with success
-      res.redirect(`${this.configService.get('FRONTEND_URL')}/profile?success=social_connection_success&provider=${req.params.provider}`);
-
-
+      res.redirect(
+        `${this.configService.get('FRONTEND_URL')}/profile?success=true&provider=${req.params.provider}`
+      );
 
     } catch (error) {
       console.error('Failed to save social connection:', error);
-      return res.sendStatus(500).json({
-        error: 'Failed to save social connection',
-        message: error.message,
-      });
-
-      // res.redirect(`${this.configService.get('FRONTEND_URL')}/?error=social_connection_error&provider=${req.params.provider}`);
+      return res.redirect(
+        `${this.configService.get('FRONTEND_URL')}/profile?success=false&reason=connection_error&provider=${req.params.provider}`
+      );
     }
   }
 
