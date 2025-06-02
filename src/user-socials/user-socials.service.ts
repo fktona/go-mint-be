@@ -172,7 +172,7 @@ export class UserSocialsService {
     });
 
     if (!connection) {
-      throw new NotFoundException(`No ${provider} connection found for this user`);
+      return null;
     }
 
     return connection;
