@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { PassportModule } from '@nestjs/passport';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserSocialsController } from './user-socials.controller';
@@ -11,14 +11,14 @@ import { UserSocialsService } from './user-socials.service';
 import jwtConfig from 'src/config/jwt.config';
 import { JwtModule } from '@nestjs/jwt';
 import { User } from 'src/user/entities/user.entity';
+import { UserModule } from '../user/user.module';
 
 @Module({
   imports: [
     PassportModule.register({ defaultStrategy: 'dynamic' }),
     TypeOrmModule.forFeature([UserSocial, User]),
-
     JwtModule.registerAsync(jwtConfig.asProvider()),
-
+    forwardRef(() => UserModule),
   ],
   controllers: [UserSocialsController],
   providers: [
@@ -26,7 +26,7 @@ import { User } from 'src/user/entities/user.entity';
     StrategyRegistryService,
     TwitterStrategy,
     TiktokStrategy,
-    DynamicStrategy, // Add the dynamic strategy
+    DynamicStrategy,
   ],
   exports: [StrategyRegistryService, DynamicStrategy, UserSocialsService],
 })
