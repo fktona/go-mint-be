@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import * as crypto from 'crypto';
 
-export interface EncryptionParams {
-    encryptedData: string;
-    iv: string;
+export interface EncryptedMessage {
+    encryptedContent: string;
     salt: string;
+    iv: string;
     tag: string;
 }
 
@@ -24,9 +24,9 @@ export class EncryptionService {
     }
 
     /**
-     * Encrypt a message using AES-256-GCM and return all parameters needed for decryption
+     * Encrypt a message using AES-256-GCM and return components for client-side decryption
      */
-    encrypt(message: string, key: string): EncryptionParams {
+    encrypt(message: string, key: string): EncryptedMessage {
         const iv = crypto.randomBytes(this.ivLength);
         const salt = crypto.randomBytes(this.saltLength);
 
@@ -48,22 +48,21 @@ export class EncryptionService {
         const tag = cipher.getAuthTag();
 
         return {
-            encryptedData: encrypted.toString('base64'),
-            iv: iv.toString('base64'),
+            encryptedContent: encrypted.toString('base64'),
             salt: salt.toString('base64'),
+            iv: iv.toString('base64'),
             tag: tag.toString('base64')
         };
     }
 
     /**
-     * Decrypt a message using AES-256-GCM
-     * This is kept for server-side operations if needed
+     * Decrypt a message using AES-256-GCM (for server-side operations if needed)
      */
-    decrypt(params: EncryptionParams, key: string): string {
-        const iv = Buffer.from(params.iv, 'base64');
-        const salt = Buffer.from(params.salt, 'base64');
-        const tag = Buffer.from(params.tag, 'base64');
-        const encrypted = Buffer.from(params.encryptedData, 'base64');
+    decrypt(encryptedMessage: EncryptedMessage, key: string): string {
+        const salt = Buffer.from(encryptedMessage.salt, 'base64');
+        const iv = Buffer.from(encryptedMessage.iv, 'base64');
+        const tag = Buffer.from(encryptedMessage.tag, 'base64');
+        const encrypted = Buffer.from(encryptedMessage.encryptedContent, 'base64');
 
         // Derive key using PBKDF2
         const derivedKey = crypto.pbkdf2Sync(

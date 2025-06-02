@@ -1,4 +1,4 @@
-import { Module, forwardRef } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CommunityChatService } from './community-chat.service';
 import { CommunityChatGateway } from './community-chat.gateway';
@@ -7,13 +7,12 @@ import { CommunityChatMessage } from './entities/community-chat-message.entity';
 import { UserModule } from '../user/user.module';
 import { UserTokensModule } from '../user-tokens/user-tokens.module';
 import { EncryptionService } from '../common/services/encryption.service';
-import { UserToken } from '../user-tokens/entities/user-token.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([CommunityChat, CommunityChatMessage, UserToken]),
+    TypeOrmModule.forFeature([CommunityChat, CommunityChatMessage]),
     UserModule,
-    forwardRef(() => UserTokensModule),
+    UserTokensModule,
   ],
   providers: [CommunityChatService, CommunityChatGateway, EncryptionService],
   exports: [CommunityChatService],

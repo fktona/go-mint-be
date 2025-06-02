@@ -36,15 +36,17 @@ export class ChatService {
     const encryptionKey = this.encryptionService.generateKey();
 
     // Encrypt the message content
-    const encryptionParams = this.encryptionService.encrypt(createChatMessageDto.content, encryptionKey);
+    const encrypted = this.encryptionService.encrypt(createChatMessageDto.content, encryptionKey);
 
     const message = this.chatMessageRepository.create({
       sender_wallet_address: senderWalletAddress,
       receiver_wallet_address: createChatMessageDto.receiver_wallet_address,
-      content: createChatMessageDto.content, // Store original content for backward compatibility
+      content: encrypted.encryptedContent,
       encryption_key: encryptionKey,
       is_encrypted: true,
-      encryption_params: encryptionParams,
+      encryption_salt: encrypted.salt,
+      encryption_iv: encrypted.iv,
+      encryption_tag: encrypted.tag,
     });
 
     return this.chatMessageRepository.save(message);

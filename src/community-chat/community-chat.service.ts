@@ -92,15 +92,17 @@ export class CommunityChatService {
     const encryptionKey = this.encryptionService.generateKey();
 
     // Encrypt the message content
-    const encryptionParams = this.encryptionService.encrypt(content, encryptionKey);
+    const encrypted = this.encryptionService.encrypt(content, encryptionKey);
 
     const message = this.communityChatMessageRepository.create({
       community_chat_id: chatId,
       sender_wallet_address: senderWalletAddress,
-      content: content, // Store original content for backward compatibility
+      content: encrypted.encryptedContent,
       encryption_key: encryptionKey,
       is_encrypted: true,
-      encryption_params: encryptionParams,
+      encryption_salt: encrypted.salt,
+      encryption_iv: encrypted.iv,
+      encryption_tag: encrypted.tag,
     });
 
     return this.communityChatMessageRepository.save(message);
