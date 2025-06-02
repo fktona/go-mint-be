@@ -144,7 +144,7 @@ export class UserSocialsService {
         coverUrl: socialData._json.profile_banner_url || null,
         websiteUrl: socialData._json.url || null,
         isVerified: socialData._json.verified || null,
-        avatarUrl: socialData.profile_image_url_https,
+        avatarUrl: socialData._json.profile_image_url_https || null,
         email: socialData.email || null,
         profileUrl: socialData.provider === 'twitter' ?
           `https://twitter.com/${socialData.username}` : null
