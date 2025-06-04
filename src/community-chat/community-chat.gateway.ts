@@ -89,7 +89,10 @@ export class CommunityChatGateway implements OnGatewayConnection, OnGatewayDisco
 
   @SubscribeMessage('findAllCommunityChat')
   findAll() {
-    return this.communityChatService.findAll();
+    console.log('findAllCommunityChat');
+    const communityChats = this.communityChatService.findAll();
+    console.log('communityChats', communityChats);
+    return communityChats;
   }
 
   @SubscribeMessage('findOneCommunityChat')

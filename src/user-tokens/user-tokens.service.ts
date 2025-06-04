@@ -133,7 +133,7 @@ export class UserTokensService {
 
   async remove(id: string): Promise<void> {
     const userToken = await this.findOne(id);
-    await this.userTokenRepository.remove(userToken);
+    await this.userTokenRepository.softDelete(id);
 
     // Send notification for token deletion
     await this.notificationService.create(

@@ -1,4 +1,4 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn, DeleteDateColumn } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { User } from '../../user/entities/user.entity';
 
@@ -61,4 +61,8 @@ export class UserToken {
     @UpdateDateColumn()
     @ApiProperty()
     updatedAt: Date;
+
+    @DeleteDateColumn()
+    @ApiProperty()
+    deletedAt: Date;
 }

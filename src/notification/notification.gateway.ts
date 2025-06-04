@@ -40,7 +40,6 @@ export class NotificationGateway implements OnGatewayConnection, OnGatewayDiscon
     @ConnectedSocket() client: Socket,
   ) {
     const notifications = await this.notificationService.findAll(client.data.walletAddress);
-    console.log('notificationsbbb', notifications.map(notification => notification.sender.userSocials));
 
     return notifications;
   }

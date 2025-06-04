@@ -49,7 +49,6 @@ export class NotificationService {
       relations: ['sender', 'recipient'],
     });
 
-    console.log('unreadNotifications', unreadNotifications);
     return unreadNotifications;
   }
 
