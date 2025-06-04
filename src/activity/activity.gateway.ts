@@ -3,7 +3,6 @@ import { Server, Socket } from 'socket.io';
 import { ActivityService } from './activity.service';
 import { CreateActivityDto } from './dto/create-activity.dto';
 import { UpdateActivityDto } from './dto/update-activity.dto';
-import { Activity } from './entities/activity.entity';
 
 @WebSocketGateway({
   cors: {

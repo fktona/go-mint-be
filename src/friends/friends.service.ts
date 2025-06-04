@@ -3,10 +3,14 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CreateFriendDto } from './dto/create-friend.dto';
 import { UpdateFriendDto } from './dto/update-friend.dto';
-import { Friend, FriendStatus } from './entities/friend.entity';
+import { Friend } from './entities/friend.entity';
 import { UserService } from '../user/user.service';
 import { FriendResponseDto, FriendListItemDto } from './dto/friend-response.dto';
 import { RelationshipStatusDto, RelationshipType } from './dto/relationship-status.dto';
+import { NotificationService } from '../notification/notification.service';
+import { NotificationType } from '../notification/enums/notification-type.enum';
+import { FriendStatus } from './enums/friend-status.enum';
+import { NotificationGateway } from '../notification/notification.gateway';
 
 @Injectable()
 export class FriendsService {
@@ -14,6 +18,8 @@ export class FriendsService {
     @InjectRepository(Friend)
     private readonly friendRepository: Repository<Friend>,
     private readonly userService: UserService,
+    private readonly notificationService: NotificationService,
+    private readonly notificationGateway: NotificationGateway,
   ) { }
 
   async create(senderWalletAddress: string, createFriendDto: CreateFriendDto): Promise<Friend> {
@@ -51,10 +57,23 @@ export class FriendsService {
     const friend = this.friendRepository.create({
       sender_wallet_address: senderWalletAddress,
       receiver_wallet_address: createFriendDto.receiver_wallet_address,
-      message: createFriendDto.message,
+      status: FriendStatus.PENDING,
     });
 
-    return this.friendRepository.save(friend);
+    const savedFriend = await this.friendRepository.save(friend);
+
+    // Send notification for friend request
+    const notification = await this.notificationService.create(
+      createFriendDto.receiver_wallet_address,
+      NotificationType.FRIEND_REQUEST_RECEIVED,
+      `New friend request from ${senderWalletAddress}`,
+      senderWalletAddress,
+      { action: 'friend_request' }
+    );
+
+    this.notificationGateway.emitNewNotification(notification);
+
+    return savedFriend;
   }
 
   private async enhanceFriendWithUserDetails(friend: Friend): Promise<FriendResponseDto> {
@@ -197,7 +216,19 @@ export class FriendsService {
       friendship.status = FriendStatus.BLOCKED;
     }
 
-    return this.friendRepository.save(friendship);
+    const savedFriendship = await this.friendRepository.save(friendship);
+
+    // Send notification for block
+    const notification = await this.notificationService.create(
+      targetWalletAddress,
+      NotificationType.FRIEND_BLOCKED,
+      `${walletAddress} blocked you`,
+      walletAddress,
+      { action: 'friend_blocked' }
+    );
+    this.notificationGateway.emitNewNotification(notification);
+
+    return savedFriendship;
   }
 
   async checkRelationshipStatus(userWalletAddress: string, targetWalletAddress: string): Promise<RelationshipStatusDto> {
@@ -272,5 +303,126 @@ export class FriendsService {
 
     // Delete the friend request
     await this.friendRepository.remove(friendRequest);
+  }
+
+  async acceptRequest(id: string, receiverWalletAddress: string): Promise<Friend> {
+    const friendRequest = await this.friendRepository.findOne({
+      where: { id, receiver_wallet_address: receiverWalletAddress, status: FriendStatus.PENDING },
+    });
+
+    if (!friendRequest) {
+      throw new NotFoundException('Friend request not found');
+    }
+
+    friendRequest.status = FriendStatus.ACCEPTED;
+    const savedFriend = await this.friendRepository.save(friendRequest);
+
+    // Send notification for accepted request
+    const notification = await this.notificationService.create(
+      friendRequest.sender_wallet_address,
+      NotificationType.FRIEND_REQUEST_ACCEPTED,
+      `${receiverWalletAddress} accepted your friend request`,
+      receiverWalletAddress,
+      { action: 'friend_accepted' }
+    );
+
+    this.notificationGateway.emitNewNotification(notification);
+
+    return savedFriend;
+  }
+
+  async rejectRequest(id: string, receiverWalletAddress: string): Promise<void> {
+    const friendRequest = await this.friendRepository.findOne({
+      where: { id, receiver_wallet_address: receiverWalletAddress, status: FriendStatus.PENDING },
+    });
+
+    if (!friendRequest) {
+      throw new NotFoundException('Friend request not found');
+    }
+
+    await this.friendRepository.remove(friendRequest);
+
+    // Send notification for rejected request
+    const notification = await this.notificationService.create(
+      friendRequest.sender_wallet_address,
+      NotificationType.FRIEND_REQUEST_REJECTED,
+      `${receiverWalletAddress} rejected your friend request`,
+      receiverWalletAddress,
+      { action: 'friend_rejected' }
+    );
+
+    this.notificationGateway.emitNewNotification(notification);
+  }
+
+  async removeFriend(walletAddress1: string, walletAddress2: string): Promise<void> {
+    const friendship = await this.friendRepository.findOne({
+      where: [
+        { sender_wallet_address: walletAddress1, receiver_wallet_address: walletAddress2, status: FriendStatus.ACCEPTED },
+        { sender_wallet_address: walletAddress2, receiver_wallet_address: walletAddress1, status: FriendStatus.ACCEPTED },
+      ],
+    });
+
+    if (!friendship) {
+      throw new NotFoundException('Friendship not found');
+    }
+
+    await this.friendRepository.remove(friendship);
+
+    // Send notifications to both users
+    const notification1 = await this.notificationService.create(
+      walletAddress1,
+      NotificationType.FRIEND_REMOVED,
+      `${walletAddress2} removed you from their friends`,
+      walletAddress2,
+      { action: 'friend_removed' }
+    );
+
+    this.notificationGateway.emitNewNotification(notification1);
+
+    const notification2 = await this.notificationService.create(
+      walletAddress2,
+      NotificationType.FRIEND_REMOVED,
+      `${walletAddress1} removed you from their friends`,
+      walletAddress1,
+      { action: 'friend_removed' }
+    );
+
+    this.notificationGateway.emitNewNotification(notification2);
+  }
+
+  async unblockUser(blockerWalletAddress: string, blockedWalletAddress: string): Promise<void> {
+    const block = await this.friendRepository.findOne({
+      where: {
+        sender_wallet_address: blockerWalletAddress,
+        receiver_wallet_address: blockedWalletAddress,
+        status: FriendStatus.BLOCKED,
+      },
+    });
+
+    if (!block) {
+      throw new NotFoundException('Block not found');
+    }
+
+    await this.friendRepository.remove(block);
+
+    // Send notification for unblock
+    const notification = await this.notificationService.create(
+      blockedWalletAddress,
+      NotificationType.FRIEND_UNBLOCKED,
+      `${blockerWalletAddress} unblocked you`,
+      blockerWalletAddress,
+      { action: 'friend_unblocked' }
+    );
+
+    this.notificationGateway.emitNewNotification(notification);
+  }
+
+  async findFriends(walletAddress: string): Promise<Friend[]> {
+    return this.friendRepository.find({
+      where: [
+        { sender_wallet_address: walletAddress, status: FriendStatus.ACCEPTED },
+        { receiver_wallet_address: walletAddress, status: FriendStatus.ACCEPTED },
+      ],
+    });
   }
 }

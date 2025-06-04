@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Inject, forwardRef } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CommunityChat } from './entities/community-chat.entity';
@@ -6,7 +6,9 @@ import { CommunityChatMessage } from './entities/community-chat-message.entity';
 import { UserService } from '../user/user.service';
 import { UserToken } from '../user-tokens/entities/user-token.entity';
 import { EncryptionService } from '../common/services/encryption.service';
-
+import { NotificationService } from '../notification/notification.service';
+import { NotificationType } from '../notification/enums/notification-type.enum';
+import { NotificationGateway } from '../notification/notification.gateway';
 @Injectable()
 export class CommunityChatService {
   constructor(
@@ -18,6 +20,9 @@ export class CommunityChatService {
     private readonly userTokenRepository: Repository<UserToken>,
     private readonly userService: UserService,
     private readonly encryptionService: EncryptionService,
+    @Inject(forwardRef(() => NotificationService))
+    private readonly notificationService: NotificationService,
+    private readonly notificationGateway: NotificationGateway,
   ) { }
 
   async createForToken(tokenId: string, creatorWalletAddress: string): Promise<CommunityChat> {
@@ -105,7 +110,24 @@ export class CommunityChatService {
       encryption_tag: encrypted.tag,
     });
 
-    return this.communityChatMessageRepository.save(message);
+    const savedMessage = await this.communityChatMessageRepository.save(message);
+
+    // TODO: Notify all members of the community chat except the sender
+    // For now, just notify the sender as an example
+    const notification = await this.notificationService.create(
+      senderWalletAddress,
+      NotificationType.NEW_COMMUNITY_MESSAGE,
+      `New message in community chat '${chat.name}'`,
+      senderWalletAddress,
+      {
+        action: 'new_community_message',
+        messageId: savedMessage.id,
+        chatId: chatId,
+      }
+    );
+
+    this.notificationGateway.emitNewNotification(notification);
+    return savedMessage;
   }
 
   async getMessages(chatId: string): Promise<CommunityChatMessage[]> {

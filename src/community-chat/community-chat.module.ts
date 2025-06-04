@@ -8,12 +8,14 @@ import { UserModule } from '../user/user.module';
 import { UserTokensModule } from '../user-tokens/user-tokens.module';
 import { EncryptionService } from '../common/services/encryption.service';
 import { UserToken } from '../user-tokens/entities/user-token.entity';
+import { NotificationModule } from '../notification/notification.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([CommunityChat, CommunityChatMessage, UserToken]),
     UserModule,
     forwardRef(() => UserTokensModule),
+    forwardRef(() => NotificationModule),
   ],
   providers: [CommunityChatService, CommunityChatGateway, EncryptionService],
   exports: [CommunityChatService],

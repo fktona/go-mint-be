@@ -6,6 +6,8 @@ import { UpdateUserTokenDto } from './dto/update-user-token.dto';
 import { TokenPurpose, UserToken } from './entities/user-token.entity';
 import { UserService } from '../user/user.service';
 import { CommunityChatService } from '../community-chat/community-chat.service';
+import { NotificationService } from '../notification/notification.service';
+import { NotificationType } from '../notification/enums/notification-type.enum';
 
 @Injectable()
 export class UserTokensService {
@@ -15,6 +17,8 @@ export class UserTokensService {
     private readonly userService: UserService,
     @Inject(forwardRef(() => CommunityChatService))
     private readonly communityChatService: CommunityChatService,
+    @Inject(forwardRef(() => NotificationService))
+    private readonly notificationService: NotificationService,
   ) { }
 
   async create(createUserTokenDto: CreateUserTokenDto): Promise<UserToken> {
@@ -45,6 +49,18 @@ export class UserTokensService {
     if (createUserTokenDto.purpose === TokenPurpose.COMMUNITY) {
       await this.communityChatService.createForToken(savedToken.id, creator.walletAddress);
     }
+
+    // Send notification for token creation
+    await this.notificationService.create(
+      creator.walletAddress,
+      NotificationType.TOKEN_CREATED,
+      `Token '${savedToken.tokenName}' created successfully!`,
+      creator.walletAddress,
+      {
+        action: 'token_created',
+        tokenId: savedToken.id,
+      }
+    );
 
     return savedToken;
   }
@@ -98,11 +114,37 @@ export class UserTokensService {
     }
 
     Object.assign(userToken, updateUserTokenDto);
-    return this.userTokenRepository.save(userToken);
+    const updatedToken = await this.userTokenRepository.save(userToken);
+
+    // Send notification for token update
+    await this.notificationService.create(
+      updatedToken.creator.walletAddress,
+      NotificationType.TOKEN_UPDATED,
+      `Token '${updatedToken.tokenName}' updated successfully!`,
+      updatedToken.creator.walletAddress,
+      {
+        action: 'token_updated',
+        tokenId: updatedToken.id,
+      }
+    );
+
+    return updatedToken;
   }
 
   async remove(id: string): Promise<void> {
     const userToken = await this.findOne(id);
     await this.userTokenRepository.remove(userToken);
+
+    // Send notification for token deletion
+    await this.notificationService.create(
+      userToken.creator.walletAddress,
+      NotificationType.TOKEN_DELETED,
+      `Token '${userToken.tokenName}' deleted successfully!`,
+      userToken.creator.walletAddress,
+      {
+        action: 'token_deleted',
+        tokenId: userToken.id,
+      }
+    );
   }
 }

@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Inject, forwardRef } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ChatMessage } from './entities/chat-message.entity';
@@ -6,6 +6,7 @@ import { CreateChatMessageDto } from './dto/create-chat-message.dto';
 import { FriendsService } from '../friends/friends.service';
 import { UserService } from '../user/user.service';
 import { EncryptionService } from '../common/services/encryption.service';
+import { NotificationService } from '../notification/notification.service';
 
 @Injectable()
 export class ChatService {
@@ -15,6 +16,8 @@ export class ChatService {
     private readonly friendsService: FriendsService,
     private readonly userService: UserService,
     private readonly encryptionService: EncryptionService,
+    @Inject(forwardRef(() => NotificationService))
+    private readonly notificationService: NotificationService,
   ) { }
 
   async createMessage(senderWalletAddress: string, createChatMessageDto: CreateChatMessageDto): Promise<ChatMessage> {

@@ -10,6 +10,7 @@ import { FriendsModule } from './friends/friends.module';
 import { ChatModule } from './chat/chat.module';
 import { CommunityChatModule } from './community-chat/community-chat.module';
 import { ActivityModule } from './activity/activity.module';
+import { NotificationModule } from './notification/notification.module';
 import dbConfig from './config/db.config';
 import appConfig from './config/app.config';
 @Module({
@@ -34,6 +35,7 @@ import appConfig from './config/app.config';
     ChatModule,
     CommunityChatModule,
     ActivityModule,
+    NotificationModule,
   ],
   controllers: [AppController],
   providers: [AppService],

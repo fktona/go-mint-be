@@ -6,6 +6,9 @@ import { UpdateChatDto } from './dto/update-chat.dto';
 import { CreateChatMessageDto } from './dto/create-chat-message.dto';
 import { UseGuards } from '@nestjs/common';
 import { WsWalletAuthGuard } from '../auth/guards/ws-wallet-auth.guard';
+import { NotificationService } from '../notification/notification.service';
+import { NotificationType } from '../notification/enums/notification-type.enum';
+import { NotificationGateway } from '../notification/notification.gateway';
 
 @WebSocketGateway({
   cors: {
@@ -18,7 +21,11 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   private typingUsers = new Map<string, Set<string>>();
 
-  constructor(private readonly chatService: ChatService) { }
+  constructor(
+    private readonly chatService: ChatService,
+    private readonly notificationService: NotificationService,
+    private readonly notificationGateway: NotificationGateway,
+  ) { }
 
   async handleConnection(client: Socket) {
     // Handle connection
@@ -48,6 +55,22 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       // Emit to receiver if they're online
       const receiverRoom = `user_${createChatMessageDto.receiver_wallet_address}`;
       this.server.to(receiverRoom).emit('newMessage', message);
+
+      // Create notification using the notification service
+      const notification = await this.notificationService.create(
+        createChatMessageDto.receiver_wallet_address,
+        NotificationType.NEW_CHAT_MESSAGE,
+        `New message from ${client.data.walletAddress}`,
+        client.data.walletAddress,
+        {
+          action: 'new_message',
+          messageId: message.id,
+          conversationId: `${client.data.walletAddress}-${createChatMessageDto.receiver_wallet_address}`
+        }
+      );
+
+      // Emit the notification to the recipient
+      this.notificationGateway.emitNewNotification(notification);
 
       return message;
     } catch (error) {

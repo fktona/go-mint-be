@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum } from 'class-validator';
-import { FriendStatus } from '../entities/friend.entity';
 import { IsSolanaAddress } from 'src/common/validators/is-solana-address.validator';
+import { FriendStatus } from '../enums/friend-status.enum';
 
 export class UpdateFriendDto {
     @ApiProperty({

@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { FriendStatus } from '../entities/friend.entity';
+import { FriendStatus } from '../enums/friend-status.enum';
 
 export enum RelationshipType {
     FRIENDS = 'FRIENDS',
