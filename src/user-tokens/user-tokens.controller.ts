@@ -68,4 +68,13 @@ export class UserTokensController {
     await this.userTokensService.remove(id);
     return ResponseUtil.success(null, 'User token deleted successfully');
   }
+
+  @Post(':id/restore')
+  @ApiOperation({ summary: 'Restore a soft-deleted user token' })
+  @ApiResponse({ status: 200, description: 'User token successfully restored', type: UserToken })
+  @ApiResponse({ status: 404, description: 'User token not found' })
+  async restore(@Param('id') id: string): Promise<ResponseInterface<UserToken>> {
+    const token = await this.userTokensService.restore(id);
+    return ResponseUtil.success(token, 'User token restored successfully');
+  }
 }

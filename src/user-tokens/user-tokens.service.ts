@@ -147,4 +147,32 @@ export class UserTokensService {
       }
     );
   }
+
+  async restore(id: string): Promise<UserToken> {
+    const userToken = await this.userTokenRepository.findOne({
+      where: { id },
+      relations: ['creator'],
+      withDeleted: true,
+    });
+
+    if (!userToken) {
+      throw new NotFoundException(`User token with ID ${id} not found`);
+    }
+
+    await this.userTokenRepository.restore(id);
+
+    // Send notification for token restoration
+    await this.notificationService.create(
+      userToken.creator.walletAddress,
+      NotificationType.TOKEN_RESTORED,
+      `Token '${userToken.tokenName}' has been restored!`,
+      userToken.creator.walletAddress,
+      {
+        action: 'token_restored',
+        tokenId: userToken.id,
+      }
+    );
+
+    return userToken;
+  }
 }
