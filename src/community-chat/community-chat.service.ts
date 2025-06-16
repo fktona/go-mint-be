@@ -1,14 +1,23 @@
-import { Injectable, NotFoundException, BadRequestException, Inject, forwardRef } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { CommunityChat } from './entities/community-chat.entity';
-import { CommunityChatMessage } from './entities/community-chat-message.entity';
-import { UserService } from '../user/user.service';
-import { UserToken } from '../user-tokens/entities/user-token.entity';
+
+import {
+  BadRequestException,
+  forwardRef,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+
 import { EncryptionService } from '../common/services/encryption.service';
-import { NotificationService } from '../notification/notification.service';
 import { NotificationType } from '../notification/enums/notification-type.enum';
 import { NotificationGateway } from '../notification/notification.gateway';
+import { NotificationService } from '../notification/notification.service';
+import { UserToken } from '../user-tokens/entities/user-token.entity';
+import { UserService } from '../user/user.service';
+import { CommunityChatMessage } from './entities/community-chat-message.entity';
+import { CommunityChat } from './entities/community-chat.entity';
+
 @Injectable()
 export class CommunityChatService {
   constructor(
@@ -30,6 +39,8 @@ export class CommunityChatService {
     const token = await this.userTokenRepository.findOne({
       where: { id: tokenId },
     });
+
+         console.log('Creating community chat for token:', tokenId, 'by creator:', creatorWalletAddress);
 
     if (!token) {
       throw new NotFoundException('Token not found');
@@ -82,6 +93,11 @@ export class CommunityChatService {
       relations: ['token', 'creator'],
     });
 
+    console.log('Finding community chat by token ID:', tokenId);
+    
+    console.log('Community chat found:', chat);
+    // console.log('Found community chat:', chat);
+
     if (!chat) {
       throw new NotFoundException('Community chat not found for this token');
     }
@@ -90,8 +106,11 @@ export class CommunityChatService {
   }
 
   async createMessage(chatId: string, senderWalletAddress: string, content: string): Promise<CommunityChatMessage> {
-    const chat = await this.findOne(chatId);
+    console.log(`Creating message in community chat with ID: ${chatId} by sender: ${senderWalletAddress}`);
+    const chat = await this.findByTokenId(chatId);
+    // console.log('Found community chat:', chat);
     await this.userService.findByWalletAddress(senderWalletAddress);
+
 
     // Generate encryption key for this message
     const encryptionKey = this.encryptionService.generateKey();
@@ -99,8 +118,10 @@ export class CommunityChatService {
     // Encrypt the message content
     const encrypted = this.encryptionService.encrypt(content, encryptionKey);
 
+    
+
     const message = this.communityChatMessageRepository.create({
-      community_chat_id: chatId,
+      community_chat_id: chat.id,
       sender_wallet_address: senderWalletAddress,
       content: encrypted.encryptedContent,
       encryption_key: encryptionKey,
@@ -111,6 +132,8 @@ export class CommunityChatService {
     });
 
     const savedMessage = await this.communityChatMessageRepository.save(message);
+
+    console.log(`Message created in community chat: ${savedMessage}`);
 
     // TODO: Notify all members of the community chat except the sender
     // For now, just notify the sender as an example
@@ -131,10 +154,18 @@ export class CommunityChatService {
   }
 
   async getMessages(chatId: string): Promise<CommunityChatMessage[]> {
-    await this.findOne(chatId);
+    console.log(`Retrieving messages for community chat with ID: ${chatId}`);
+
+    // Find the chat by token ID
+   const chat = await this.findByTokenId(chatId);
+
+   console.log(`Chat found for ID: ${chatId}`, chat);
+
+
+    console.log(`Retrieving messages for community chat with ID: ${chatId}`);
 
     return this.communityChatMessageRepository.find({
-      where: { community_chat_id: chatId },
+      where: { community_chat_id: chat.id },
       relations: ['sender'],
       order: { created_at: 'ASC' },
     });

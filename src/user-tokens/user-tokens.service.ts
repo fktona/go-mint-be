@@ -1,13 +1,21 @@
-import { Injectable, NotFoundException, ConflictException, Inject, forwardRef } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+
+import {
+  ConflictException,
+  forwardRef,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+
+import { CommunityChatService } from '../community-chat/community-chat.service';
+import { NotificationType } from '../notification/enums/notification-type.enum';
+import { NotificationService } from '../notification/notification.service';
+import { UserService } from '../user/user.service';
 import { CreateUserTokenDto } from './dto/create-user-token.dto';
 import { UpdateUserTokenDto } from './dto/update-user-token.dto';
-import { TokenPurpose, UserToken } from './entities/user-token.entity';
-import { UserService } from '../user/user.service';
-import { CommunityChatService } from '../community-chat/community-chat.service';
-import { NotificationService } from '../notification/notification.service';
-import { NotificationType } from '../notification/enums/notification-type.enum';
+import { UserToken } from './entities/user-token.entity';
 
 @Injectable()
 export class UserTokensService {
@@ -34,9 +42,9 @@ export class UserTokensService {
       where: { creator_id: creator.id },
     });
 
-    if (userHasToken) {
-      throw new ConflictException('User already has a token');
-    }
+    // if (userHasToken) {
+    //   throw new ConflictException('User already has a token');
+    // }
 
     if (existingToken) {
       throw new ConflictException('Token with this address already exists');
@@ -45,10 +53,12 @@ export class UserTokensService {
     const userToken = this.userTokenRepository.create(createUserTokenDto);
     const savedToken = await this.userTokenRepository.save(userToken);
 
+    console.log('Creating user token:', savedToken);
+
     // Create community chat for the token
-    if (createUserTokenDto.purpose === TokenPurpose.COMMUNITY) {
+    
       await this.communityChatService.createForToken(savedToken.id, creator.walletAddress);
-    }
+  
 
     // Send notification for token creation
     await this.notificationService.create(

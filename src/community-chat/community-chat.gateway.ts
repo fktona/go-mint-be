@@ -1,10 +1,21 @@
-import { WebSocketGateway, WebSocketServer, SubscribeMessage, MessageBody, ConnectedSocket, OnGatewayConnection, OnGatewayDisconnect } from '@nestjs/websockets';
-import { Server, Socket } from 'socket.io';
-import { CommunityChatService } from './community-chat.service';
-import { CreateCommunityChatDto } from './dto/create-community-chat.dto';
-import { UpdateCommunityChatDto } from './dto/update-community-chat.dto';
+import {
+  Server,
+  Socket,
+} from 'socket.io';
+
 import { UseGuards } from '@nestjs/common';
+import {
+  ConnectedSocket,
+  MessageBody,
+  OnGatewayConnection,
+  OnGatewayDisconnect,
+  SubscribeMessage,
+  WebSocketGateway,
+  WebSocketServer,
+} from '@nestjs/websockets';
+
 import { WsWalletAuthGuard } from '../auth/guards/ws-wallet-auth.guard';
+import { CommunityChatService } from './community-chat.service';
 
 @WebSocketGateway({
   cors: {
@@ -33,10 +44,12 @@ export class CommunityChatGateway implements OnGatewayConnection, OnGatewayDisco
     @ConnectedSocket() client: Socket,
     @MessageBody() data: { chatId: string },
   ) {
-    const chat = await this.communityChatService.findOne(data.chatId);
+    console.log(`Client ${client.id} joining chat: ${data.chatId}`);
+    const chat = await this.communityChatService.findByTokenId(data.chatId);
     client.join(`community_chat_${data.chatId}`);
 
     const messages = await this.communityChatService.getMessages(data.chatId);
+    console.log(`Client ${client.id} joined chat: ${data.chatId} with messages:`, messages);
     return { chat, messages };
   }
 
@@ -46,6 +59,8 @@ export class CommunityChatGateway implements OnGatewayConnection, OnGatewayDisco
     @ConnectedSocket() client: Socket,
     @MessageBody() data: { chatId: string; content: string },
   ) {
+    console.log(`Client ${client.id} sending message to chat: ${data.chatId} , content: ${data.content}`);
+    console.log('Client data:', client.data);
     try {
       const message = await this.communityChatService.createMessage(
         data.chatId,
@@ -97,7 +112,7 @@ export class CommunityChatGateway implements OnGatewayConnection, OnGatewayDisco
 
   @SubscribeMessage('findOneCommunityChat')
   findOne(@MessageBody() id: string) {
-    return this.communityChatService.findOne(id);
+    return this.communityChatService.findByTokenId(id);
   }
 
 

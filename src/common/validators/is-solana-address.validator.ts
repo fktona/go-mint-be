@@ -1,7 +1,12 @@
-import { registerDecorator, ValidationOptions, ValidationArguments } from 'class-validator';
+import {
+  registerDecorator,
+  ValidationArguments,
+  ValidationOptions,
+} from 'class-validator';
+
 import { PublicKey } from '@solana/web3.js';
 
-export function IsSolanaAddress(validationOptions?: ValidationOptions) {
+export function IsSolanaAddress(strictValidation: boolean = false, validationOptions?: ValidationOptions) {
     return function (object: Object, propertyName: string) {
         registerDecorator({
             name: 'isSolanaAddress',
@@ -10,6 +15,11 @@ export function IsSolanaAddress(validationOptions?: ValidationOptions) {
             options: validationOptions,
             validator: {
                 validate(value: any, args: ValidationArguments) {
+                    if (!strictValidation) {
+                        // Accept any string when not in strict mode
+                        return typeof value === 'string';
+                    }
+                    
                     try {
                         // Try to create a PublicKey from the address
                         new PublicKey(value);
@@ -19,9 +29,12 @@ export function IsSolanaAddress(validationOptions?: ValidationOptions) {
                     }
                 },
                 defaultMessage(args: ValidationArguments) {
-                    return `${args.property} must be a valid Solana address`;
+                    const constraint = args.constraints?.[0] ?? true;
+                    return constraint 
+                        ? `${args.property} must be a valid Solana address` 
+                        : `${args.property} must be a string`;
                 },
             },
         });
     };
-} 
+}

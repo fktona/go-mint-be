@@ -1,6 +1,15 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
-import { User } from '../../user/entities/user.entity';
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  OneToMany,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
+
 import { UserToken } from '../../user-tokens/entities/user-token.entity';
+import { User } from '../../user/entities/user.entity';
 import { CommunityChatMessage } from './community-chat-message.entity';
 
 @Entity('community_chats')
