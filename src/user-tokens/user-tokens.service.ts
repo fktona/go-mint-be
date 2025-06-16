@@ -38,9 +38,9 @@ export class UserTokensService {
       where: { tokenAddress: createUserTokenDto.tokenAddress },
     });
 
-    const userHasToken = await this.userTokenRepository.findOne({
-      where: { creator_id: creator.id },
-    });
+    // const userHasToken = await this.userTokenRepository.findOne({
+    //   where: { creator_id: creator.id },
+    // });
 
     // if (userHasToken) {
     //   throw new ConflictException('User already has a token');

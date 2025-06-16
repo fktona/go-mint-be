@@ -1,11 +1,25 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, HttpCode, HttpStatus } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { UserTokensService } from './user-tokens.service';
-import { CreateUserTokenDto } from './dto/create-user-token.dto';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Patch,
+  Post,
+} from '@nestjs/common';
+import {
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
+
+import { ResponseInterface } from '../common/interfaces/response.interface';
+import { ResponseUtil } from '../common/utils/response.util';
 import { UpdateUserTokenDto } from './dto/update-user-token.dto';
 import { UserToken } from './entities/user-token.entity';
-import { ResponseUtil } from '../common/utils/response.util';
-import { ResponseInterface } from '../common/interfaces/response.interface';
+import { UserTokensService } from './user-tokens.service';
 
 @ApiTags('user-tokens')
 @Controller('user-tokens')
@@ -16,7 +30,8 @@ export class UserTokensController {
   @ApiOperation({ summary: 'Create a new user token' })
   @ApiResponse({ status: 201, description: 'User token successfully created', type: UserToken })
   @ApiResponse({ status: 409, description: 'Token with this address already exists' })
-  async create(@Body() createUserTokenDto: CreateUserTokenDto): Promise<ResponseInterface<UserToken>> {
+  async create(@Body() createUserTokenDto: any): Promise<ResponseInterface<UserToken>> {
+    console.log('Creating user token with data:', createUserTokenDto);
     const token = await this.userTokensService.create(createUserTokenDto);
     return ResponseUtil.success(token, 'User token created successfully');
   }
