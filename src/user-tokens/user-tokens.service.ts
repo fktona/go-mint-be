@@ -31,7 +31,11 @@ export class UserTokensService {
 
   async create(createUserTokenDto: CreateUserTokenDto): Promise<UserToken> {
     // Check if user exists
+
+    console.log('Creating user token with data:', createUserTokenDto);
     const creator = await this.userService.findOne(createUserTokenDto.creator_id);
+
+    console.log('Creator found:', createUserTokenDto);
 
     // Check if token address already exists
     const existingToken = await this.userTokenRepository.findOne({
@@ -46,31 +50,33 @@ export class UserTokensService {
     //   throw new ConflictException('User already has a token');
     // }
 
-    if (existingToken) {
-      throw new ConflictException('Token with this address already exists');
-    }
+    // if (existingToken) {
+    //   throw new ConflictException('Token with this address already exists');
+    // }
 
     const userToken = this.userTokenRepository.create(createUserTokenDto);
     const savedToken = await this.userTokenRepository.save(userToken);
 
     console.log('Creating user token:', savedToken);
 
-    // Create community chat for the token
+    // Create community chat for the token\
+    
     
       await this.communityChatService.createForToken(savedToken.id, creator.walletAddress);
   
+      console.log('Community chat created for token:', savedToken);
 
     // Send notification for token creation
-    await this.notificationService.create(
-      creator.walletAddress,
-      NotificationType.TOKEN_CREATED,
-      `Token '${savedToken.tokenName}' created successfully!`,
-      creator.walletAddress,
-      {
-        action: 'token_created',
-        tokenId: savedToken.id,
-      }
-    );
+    // await this.notificationService.create(
+    //   creator.walletAddress,
+    //   NotificationType.TOKEN_CREATED,
+    //   `Token '${savedToken.tokenName}' created successfully!`,
+    //   creator.walletAddress,
+    //   {
+    //     action: 'token_created',
+    //     tokenId: savedToken.id,
+    //   }
+    // );
 
     return savedToken;
   }

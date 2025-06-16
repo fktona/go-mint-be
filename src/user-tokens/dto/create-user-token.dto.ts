@@ -4,6 +4,9 @@ import {
   IsString,
   IsUUID,
 } from 'class-validator';
+import {
+  IsSolanaAddress,
+} from 'src/common/validators/is-solana-address.validator';
 
 import { ApiProperty } from '@nestjs/swagger';
 
@@ -14,7 +17,7 @@ export class CreateUserTokenDto {
         example: '7v91N7iZ9mNicL8WfG6cgSCKyRXydQjLh6UYBWwm6y1M',
         description: 'The token contract address',
     })
-    // @IsSolanaAddress()
+    @IsSolanaAddress()
     tokenAddress: string;
 
     @ApiProperty({
