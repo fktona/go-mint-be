@@ -1,5 +1,16 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn, DeleteDateColumn } from 'typeorm';
+import {
+  Column,
+  CreateDateColumn,
+  DeleteDateColumn,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
+} from 'typeorm';
+
 import { ApiProperty } from '@nestjs/swagger';
+
 import { User } from '../../user/entities/user.entity';
 
 export enum TokenPurpose {
@@ -13,7 +24,7 @@ export class UserToken {
     @ApiProperty({ example: '123e4567-e89b-12d3-a456-426614174000' })
     id: string;
 
-    @Column()
+    @Column({ unique: true })
     @ApiProperty({ example: '0x742d35Cc6634C0532925a3b844Bc454e4438f44e' })
     tokenAddress: string;
 

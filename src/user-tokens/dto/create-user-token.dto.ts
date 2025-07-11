@@ -1,7 +1,16 @@
+import {
+  IsEnum,
+  IsOptional,
+  IsString,
+  IsUUID,
+} from 'class-validator';
+import {
+  IsSolanaAddress,
+} from 'src/common/validators/is-solana-address.validator';
+
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
+
 import { TokenPurpose } from '../entities/user-token.entity';
-import { IsSolanaAddress } from 'src/common/validators/is-solana-address.validator';
 
 export class CreateUserTokenDto {
     @ApiProperty({

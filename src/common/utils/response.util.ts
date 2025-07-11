@@ -1,5 +1,6 @@
 import { ResponseInterface } from '../interfaces/response.interface';
 
+
 export class ResponseUtil {
     static success<T>(
         data: T,

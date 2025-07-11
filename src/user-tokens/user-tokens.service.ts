@@ -1,13 +1,21 @@
-import { Injectable, NotFoundException, ConflictException, Inject, forwardRef } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+
+import {
+  ConflictException,
+  forwardRef,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+
+import { CommunityChatService } from '../community-chat/community-chat.service';
+import { NotificationType } from '../notification/enums/notification-type.enum';
+import { NotificationService } from '../notification/notification.service';
+import { UserService } from '../user/user.service';
 import { CreateUserTokenDto } from './dto/create-user-token.dto';
 import { UpdateUserTokenDto } from './dto/update-user-token.dto';
-import { TokenPurpose, UserToken } from './entities/user-token.entity';
-import { UserService } from '../user/user.service';
-import { CommunityChatService } from '../community-chat/community-chat.service';
-import { NotificationService } from '../notification/notification.service';
-import { NotificationType } from '../notification/enums/notification-type.enum';
+import { UserToken } from './entities/user-token.entity';
 
 @Injectable()
 export class UserTokensService {
@@ -23,44 +31,52 @@ export class UserTokensService {
 
   async create(createUserTokenDto: CreateUserTokenDto): Promise<UserToken> {
     // Check if user exists
+
+    console.log('Creating user token with data:', createUserTokenDto);
     const creator = await this.userService.findOne(createUserTokenDto.creator_id);
+
+    console.log('Creator found:', createUserTokenDto);
 
     // Check if token address already exists
     const existingToken = await this.userTokenRepository.findOne({
       where: { tokenAddress: createUserTokenDto.tokenAddress },
     });
 
-    const userHasToken = await this.userTokenRepository.findOne({
-      where: { creator_id: creator.id },
-    });
+    // const userHasToken = await this.userTokenRepository.findOne({
+    //   where: { creator_id: creator.id },
+    // });
 
-    if (userHasToken) {
-      throw new ConflictException('User already has a token');
-    }
+    // if (userHasToken) {
+    //   throw new ConflictException('User already has a token');
+    // }
 
-    if (existingToken) {
-      throw new ConflictException('Token with this address already exists');
-    }
+    // if (existingToken) {
+    //   throw new ConflictException('Token with this address already exists');
+    // }
 
     const userToken = this.userTokenRepository.create(createUserTokenDto);
     const savedToken = await this.userTokenRepository.save(userToken);
 
-    // Create community chat for the token
-    if (createUserTokenDto.purpose === TokenPurpose.COMMUNITY) {
+    console.log('Creating user token:', savedToken);
+
+    // Create community chat for the token\
+    
+    
       await this.communityChatService.createForToken(savedToken.id, creator.walletAddress);
-    }
+  
+      console.log('Community chat created for token:', savedToken);
 
     // Send notification for token creation
-    await this.notificationService.create(
-      creator.walletAddress,
-      NotificationType.TOKEN_CREATED,
-      `Token '${savedToken.tokenName}' created successfully!`,
-      creator.walletAddress,
-      {
-        action: 'token_created',
-        tokenId: savedToken.id,
-      }
-    );
+    // await this.notificationService.create(
+    //   creator.walletAddress,
+    //   NotificationType.TOKEN_CREATED,
+    //   `Token '${savedToken.tokenName}' created successfully!`,
+    //   creator.walletAddress,
+    //   {
+    //     action: 'token_created',
+    //     tokenId: savedToken.id,
+    //   }
+    // );
 
     return savedToken;
   }
