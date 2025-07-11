@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, HttpCode, HttpStatus, BadRequestException } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -17,8 +17,41 @@ export class UserController {
   @ApiResponse({ status: 201, description: 'User successfully created', type: User })
   @ApiResponse({ status: 409, description: 'User with this wallet address already exists' })
   async create(@Body() createUserDto: CreateUserDto): Promise<ResponseInterface<User>> {
-    const user = await this.userService.create(createUserDto);
-    return ResponseUtil.success(user, 'User created successfully');
+    try {
+      if (!createUserDto || !createUserDto.walletAddress) {
+        throw new BadRequestException('walletAddress is required');
+      }
+      
+      const user = await this.userService.create(createUserDto);
+      return ResponseUtil.success(user, 'User created successfully');
+    } catch (error) {
+      console.error('Error in create user controller:', error);
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+      throw new BadRequestException('Failed to create user: ' + error.message);
+    }
+  }
+
+  @Post('test')
+  @ApiOperation({ summary: 'Test endpoint to debug request body' })
+  async testCreate(@Body() body: any): Promise<ResponseInterface<any>> {
+    return ResponseUtil.success({
+      receivedBody: body,
+      bodyType: typeof body,
+      bodyKeys: body ? Object.keys(body) : [],
+      walletAddress: body?.walletAddress,
+    }, 'Test endpoint response');
+  }
+
+  @Post('test-validation')
+  @ApiOperation({ summary: 'Test validation with CreateUserDto' })
+  async testValidation(@Body() createUserDto: CreateUserDto): Promise<ResponseInterface<any>> {
+    return ResponseUtil.success({
+      receivedDto: createUserDto,
+      walletAddress: createUserDto?.walletAddress,
+      hasWalletAddress: !!createUserDto?.walletAddress,
+    }, 'Validation test response');
   }
 
   @Get()

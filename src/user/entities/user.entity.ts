@@ -9,7 +9,7 @@ export class User {
     @ApiProperty({ example: '123e4567-e89b-12d3-a456-426614174000' })
     id: string;
 
-    @Column({ unique: true })
+    @Column({ unique: true, nullable: false })
     @ApiProperty({ example: '0x742d35Cc6634C0532925a3b844Bc454e4438f44e' })
     walletAddress: string;
 

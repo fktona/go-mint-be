@@ -5,14 +5,26 @@ import { ValidationPipe } from '@nestjs/common';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
 import * as session from 'express-session';
 import * as express from 'express';
+import { BadRequestException } from '@nestjs/common';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  // Body parsing middleware
+  app.use(express.json({ limit: '10mb' }));
+  app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
   // Global pipes
   app.useGlobalPipes(new ValidationPipe({
     whitelist: true,
     transform: true,
+    forbidNonWhitelisted: true,
+    stopAtFirstError: true,
+    disableErrorMessages: false,
+    exceptionFactory: (errors) => {
+      console.log('Validation errors:', errors);
+      return new BadRequestException(errors);
+    },
   }));
 
   // Global interceptors

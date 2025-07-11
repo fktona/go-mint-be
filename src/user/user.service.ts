@@ -1,4 +1,4 @@
-import { Injectable, ConflictException, NotFoundException } from '@nestjs/common';
+import { Injectable, ConflictException, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -12,6 +12,10 @@ export class UserService {
     private readonly userRepository: Repository<User>,
   ) { }
   async create(createUserDto: CreateUserDto): Promise<User> {
+    if (!createUserDto || !createUserDto.walletAddress) {
+      throw new BadRequestException('walletAddress is required');
+    }
+
     const existingUser = await this.userRepository.findOne({
       where: { walletAddress: createUserDto.walletAddress }
     });
@@ -20,8 +24,17 @@ export class UserService {
       return existingUser;
     }
 
-    const user = this.userRepository.create(createUserDto);
-    return this.userRepository.save(user);
+    try {
+      console.log('Creating user with DTO:', createUserDto);
+      const user = this.userRepository.create(createUserDto);
+      console.log('Created user entity:', user);
+      const savedUser = await this.userRepository.save(user);
+      console.log('Saved user:', savedUser);
+      return savedUser;
+    } catch (error) {
+      console.error('Error creating user:', error);
+      throw new BadRequestException('Failed to create user: ' + error.message);
+    }
   }
 
   async findAll(): Promise<User[]> {
