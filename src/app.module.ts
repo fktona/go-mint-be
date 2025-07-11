@@ -11,6 +11,7 @@ import { ChatModule } from './chat/chat.module';
 import { CommunityChatModule } from './community-chat/community-chat.module';
 import { ActivityModule } from './activity/activity.module';
 import { NotificationModule } from './notification/notification.module';
+import { AuthModule } from './auth/auth.module';
 import dbConfig from './config/db.config';
 import appConfig from './config/app.config';
 @Module({
@@ -36,6 +37,7 @@ import appConfig from './config/app.config';
     CommunityChatModule,
     ActivityModule,
     NotificationModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],
