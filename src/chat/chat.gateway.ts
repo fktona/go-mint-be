@@ -48,15 +48,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         client.data.walletAddress,
         createChatMessageDto,
       );
-
-      // Emit to sender
       this.server.to(client.id).emit('messageSent', message);
-
-      // Emit to receiver if they're online
       const receiverRoom = `user_${createChatMessageDto.receiver_wallet_address}`;
       this.server.to(receiverRoom).emit('newMessage', message);
-
-      // Create notification using the notification service
       const notification = await this.notificationService.create(
         createChatMessageDto.receiver_wallet_address,
         NotificationType.NEW_CHAT_MESSAGE,
@@ -68,24 +62,19 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
           conversationId: `${client.data.walletAddress}-${createChatMessageDto.receiver_wallet_address}`
         }
       );
-
-      // Emit the notification to the recipient
       this.notificationGateway.emitNewNotification(notification);
-
       return message;
     } catch (error) {
       this.server.to(client.id).emit('error', error.message);
       throw error;
     }
   }
-
   @UseGuards(WsWalletAuthGuard)
   @SubscribeMessage('typing')
   async handleTyping(
     @ConnectedSocket() client: Socket,
     @MessageBody() data: { receiver_wallet_address: string; isTyping: boolean },
   ) {
-    const senderRoom = `user_${client.data.walletAddress}`;
     const receiverRoom = `user_${data.receiver_wallet_address}`;
 
     if (data.isTyping) {

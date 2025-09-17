@@ -13,10 +13,10 @@ import { ApiProperty } from '@nestjs/swagger';
 
 import { User } from '../../user/entities/user.entity';
 
-export enum TokenPurpose {
-    COMMUNITY = 'COMMUNITY',
-    PERSONAL = 'PERSONAL'
-}
+// export enum TokenPurpose {
+//     COMMUNITY = 'COMMUNITY',
+//     PERSONAL = 'PERSONAL'
+// }
 
 @Entity('user_tokens')
 export class UserToken {
@@ -37,20 +37,18 @@ export class UserToken {
     tokenSymbol: string;
 
     @Column({
-        type: 'enum',
-        enum: TokenPurpose,
-        default: TokenPurpose.PERSONAL
+        type: 'varchar',
+        default: 'launch'
     })
     @ApiProperty({
-        enum: TokenPurpose,
-        example: TokenPurpose.COMMUNITY,
+        example: 'launch',
         description: 'Purpose of the token (COMMUNITY or PERSONAL)'
     })
-    purpose: TokenPurpose;
+    purpose: string;
 
     @Column({ nullable: true })
     @ApiProperty({
-        example: 'Community Governance Token',
+        example: 'Description of the token',
         description: 'Description of the token',
         required: false
     })

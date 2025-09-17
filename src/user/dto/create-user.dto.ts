@@ -10,6 +10,7 @@ export class CreateUserDto {
         example: '7v91N7iZ9mNicL8WfG6cgSCKyRXydQjLh6UYBWwm6y1M',
         description: 'The wallet address of the user',
     })
+    @IsString()
     // @IsSolanaAddress()
     walletAddress: string;
 

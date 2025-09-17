@@ -1,5 +1,4 @@
 import {
-  IsEnum,
   IsOptional,
   IsString,
   IsUUID,
@@ -10,7 +9,6 @@ import {
 
 import { ApiProperty } from '@nestjs/swagger';
 
-import { TokenPurpose } from '../entities/user-token.entity';
 
 export class CreateUserTokenDto {
     @ApiProperty({
@@ -39,15 +37,14 @@ export class CreateUserTokenDto {
     tokenSymbol?: string;
 
     @ApiProperty({
-        enum: TokenPurpose,
-        example: TokenPurpose.COMMUNITY,
+        example: 'launch',
         description: 'Purpose of the token (COMMUNITY or PERSONAL)',
     })
-    @IsEnum(TokenPurpose)
-    purpose: TokenPurpose;
+    @IsString()
+    purpose: string;
 
     @ApiProperty({
-        example: 'Community Governance Token',
+        example: 'Description of the token',
         description: 'Description of the token',
         required: false,
     })

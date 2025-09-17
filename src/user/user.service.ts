@@ -20,6 +20,8 @@ export class UserService {
       return existingUser;
     }
 
+    console.log('Creating user with data:', createUserDto);
+
     const user = this.userRepository.create(createUserDto);
     return this.userRepository.save(user);
   }

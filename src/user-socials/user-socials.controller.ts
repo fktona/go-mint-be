@@ -25,7 +25,7 @@ export class UserSocialsController {
   // Route for handling OAuth callbacks
   @Get(':provider/callback')
   @UseGuards(DynamicAuthGuard)
-  async authCallback(@Req() req: any, @Res() res: Response) {
+  async authCallback(@Req() req: any, @Res() res: Response ) {
     console.log("authCallback called", req.authInfo);
     try {
       // Extract profile from authenticated request

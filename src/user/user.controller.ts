@@ -17,6 +17,7 @@ export class UserController {
   @ApiResponse({ status: 201, description: 'User successfully created', type: User })
   @ApiResponse({ status: 409, description: 'User with this wallet address already exists' })
   async create(@Body() createUserDto: CreateUserDto): Promise<ResponseInterface<User>> {
+    console.log('Creating user with data:', createUserDto);
     const user = await this.userService.create(createUserDto);
     return ResponseUtil.success(user, 'User created successfully');
   }
